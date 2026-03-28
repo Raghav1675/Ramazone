@@ -6,10 +6,6 @@ function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
 
-  useEffect(() => {
-    fetchProduct();
-  }, [id]);
-
   const fetchProduct = async () => {
     try {
       const res = await axios.get(`https://ramazone.onrender.com/api/products/${id}`);
@@ -18,6 +14,10 @@ function ProductDetail() {
       console.error(err);
     }
   };
+  
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
 
   const addToCart = async () => {
     await axios.post("https://ramazone.onrender.com/api/cart", {
