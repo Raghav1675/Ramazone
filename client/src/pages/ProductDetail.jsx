@@ -8,7 +8,7 @@ function ProductDetail() {
 
   useEffect(() => {
     fetchProduct();
-  }, []);
+  }, [id]);
 
   const fetchProduct = async () => {
     try {
