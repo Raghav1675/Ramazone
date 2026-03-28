@@ -12,7 +12,7 @@ function ProductDetail() {
 
   const fetchProduct = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/products/${id}`);
+      const res = await axios.get(`https://ramazone.onrender.com/api/products/${id}`);
       setProduct(res.data);
     } catch (err) {
       console.error(err);
@@ -20,7 +20,7 @@ function ProductDetail() {
   };
 
   const addToCart = async () => {
-    await axios.post("http://localhost:5000/api/cart", {
+    await axios.post("https://ramazone.onrender.com/api/cart", {
       product_id: id,
       quantity: 1,
     });
