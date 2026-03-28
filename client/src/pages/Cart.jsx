@@ -11,12 +11,12 @@ function Cart() {
   }, []);
 
   const fetchCart = async () => {
-    const res = await axios.get("http://localhost:5000/api/cart");
+    const res = await axios.get("https://ramazone.onrender.com/api/cart");
     setCart(res.data);
   };
 
   const updateQuantity = async (product_id, quantity) => {
-    await axios.put("http://localhost:5000/api/cart", {
+    await axios.put("https://ramazone.onrender.com/api/cart", {
       product_id,
       quantity,
     });
@@ -24,7 +24,7 @@ function Cart() {
   };
 
   const removeItem = async (product_id) => {
-    await axios.delete(`http://localhost:5000/api/cart/${product_id}`);
+    await axios.delete(`https://ramazone.onrender.com/api/cart/${product_id}`);
     fetchCart();
   };
 
