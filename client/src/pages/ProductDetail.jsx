@@ -6,16 +6,16 @@ function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
 
-  const fetchProduct = async () => {
-    try {
-      const res = await axios.get(`https://ramazone.onrender.com/api/products/${id}`);
-      setProduct(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  
   useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await axios.get(`https://ramazone.onrender.com/api/products/${id}`);
+        setProduct(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchProduct();
   }, [id]);
 
