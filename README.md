@@ -1,6 +1,6 @@
 # Ramazone 2.0 🛒
 
-> A production-ready, full-stack Amazon-clone e-commerce platform built as a monorepo for the Scaler AI Labs SDE Intern Assignment.
+> A production-ready, full-stack Amazon-clone e-commerce platform built as a monorepo for the Scaler AI Labs SDE Intern Assignment. All APIs used explicitly for user to see URLs
 
 **Live Demo →** [ramazone20.vercel.app](https://ramazone20.vercel.app)
 
@@ -151,7 +151,7 @@ gunicorn main:app --bind 0.0.0.0:8001
 |---------|----------|-----|
 | Frontend | Vercel | [ramazone20.vercel.app](https://ramazone20.vercel.app) |
 | Backend API | Render | `https://ramazone-api.onrender.com` |
-| Avenger Bot | Render | `https://avenger-ramazone.onrender.com` |
+| Avenger Bot | Render | `https://avenger-for-ramazone2-0.onrender.com/` |
 
 ---
 
