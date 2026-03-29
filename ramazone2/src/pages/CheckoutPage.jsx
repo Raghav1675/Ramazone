@@ -148,15 +148,15 @@ const displayDiscount = displayMRP - displaySubtotal;
             {step===1 && (
               <Section title="📍 Delivery Address">
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"14px" }} className="form-grid-2">
-                  <Field label="Full Name *" error={errors.fullName}><input className="form-input" placeholder="Ramesh Kumar" value={form.fullName} onChange={e=>set("fullName",e.target.value)} /></Field>
+                  <Field label="Full Name *" error={errors.fullName}><input className="form-input" placeholder="Raghav Gupta" value={form.fullName} onChange={e=>set("fullName",e.target.value)} /></Field>
                   <Field label="Mobile *" error={errors.mobile}><input className="form-input" placeholder="9876543210" value={form.mobile} onChange={e=>set("mobile",e.target.value)} maxLength={10} /></Field>
                   <Field label="Email" error={errors.email}><input className="form-input" placeholder="you@email.com" value={form.email} onChange={e=>set("email",e.target.value)} type="email" /></Field>
-                  <Field label="PIN Code *" error={errors.pincode}><input className="form-input" placeholder="143001" value={form.pincode} onChange={e=>set("pincode",e.target.value)} maxLength={6} /></Field>
+                  <Field label="PIN Code *" error={errors.pincode}><input className="form-input" placeholder="140603" value={form.pincode} onChange={e=>set("pincode",e.target.value)} maxLength={6} /></Field>
                 </div>
                 <Field label="Address *" error={errors.address}><textarea className="form-input" placeholder="House/Flat No, Street, Area" value={form.address} onChange={e=>set("address",e.target.value)} rows={2} style={{resize:"vertical"}} /></Field>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"14px" }} className="form-grid-2">
                   <Field label="Landmark"><input className="form-input" placeholder="Near SBI Bank" value={form.landmark} onChange={e=>set("landmark",e.target.value)} /></Field>
-                  <Field label="City *" error={errors.city}><input className="form-input" placeholder="Amritsar" value={form.city} onChange={e=>set("city",e.target.value)} /></Field>
+                  <Field label="City *" error={errors.city}><input className="form-input" placeholder="Zirakpur" value={form.city} onChange={e=>set("city",e.target.value)} /></Field>
                   <Field label="State *" error={errors.state}>
                     <select className="form-input" value={form.state} onChange={e=>set("state",e.target.value)}>
                       <option value="">Select State</option>
