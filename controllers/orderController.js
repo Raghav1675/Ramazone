@@ -1,96 +1,112 @@
 const pool = require("../config/db");
 
+// Hardcoded for development
+const userId = 1;
+
 const getAllOrders = async (req, res) => {
     try {
         const result = await pool.query(
             "SELECT * FROM orders ORDER BY id DESC"
         );
-
         res.json(result.rows);
     } catch (error) {
         console.error(error);
         res.status(500).send("Server Error");
     }
 };
-// PLACE ORDER
+
+// PLACE ORDER (Secure & Transactional)
 const placeOrder = async (req, res) => {
+    const client = await pool.connect();
+
     try {
-        const { address, email } = req.body;
+        const { address, email, items } = req.body;
 
-        // 1. Get cart items
-        const cartItems = await pool.query(
-            `SELECT cart.*, products.price
-             FROM cart
-             JOIN products ON cart.product_id = products.id`
-        );
-
-        if (cartItems.rows.length === 0) {
-            return res.status(400).json({ message: "Cart is empty" });
+        if (!items || items.length === 0) {
+            return res.status(400).json({ message: "No items to order" });
         }
 
-        // 2. Calculate total
-        let total = 0;
-        cartItems.rows.forEach(item => {
-            total += item.price * item.quantity;
-        });
+        await client.query('BEGIN'); // Start transaction
 
-        // 3. Create order
-        const orderResult = await pool.query(
-            "INSERT INTO orders (total_amount, address, email) VALUES ($1, $2, $3) RETURNING *",
-            [total, address, email]
+        let secureTotal = 0;
+        let processedItems = [];
+
+        // 1. Check stock and calculate secure total securely on the backend
+        for (let item of items) {
+            const pId = item.product_id || item.id;
+            const qty = item.quantity || 1;
+
+            // Lock row to prevent race conditions during checkout
+            const productRes = await client.query(
+                "SELECT name, price, stock FROM products WHERE id = $1 FOR UPDATE",
+                [pId]
+            );
+
+            if (productRes.rows.length === 0) {
+                throw new Error(`Product ID ${pId} not found`);
+            }
+
+            const product = productRes.rows[0];
+
+            if (product.stock < qty) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({
+                    message: `Not enough stock for ${product.name}. Only ${product.stock} left.`
+                });
+            }
+
+            // Calculate price securely based on DB value
+            secureTotal += (Number(product.price) * qty);
+            processedItems.push({ pId, qty, price: product.price, name: product.name });
+        }
+
+        // Add delivery logic (Free above 499, else 40)
+        const deliveryCharge = secureTotal >= 499 ? 0 : 40;
+        secureTotal += deliveryCharge;
+
+        // 2. Create the order
+        const orderResult = await client.query(
+            "INSERT INTO orders (total_amount, address, email) VALUES ($1, $2, $3) RETURNING id",
+            [secureTotal, address, email]
         );
-
         const orderId = orderResult.rows[0].id;
 
-        // 4. Insert order items
-        for (let item of cartItems.rows) {
+        // 3. Insert order items, update stock, and carefully clear cart
+        for (let item of processedItems) {
+            await client.query(
+                `INSERT INTO order_items (order_id, product_id, quantity, price)
+                 VALUES ($1, $2, $3, $4)`,
+                [orderId, item.pId, item.qty, item.price]
+            );
 
-    // 1. Check stock
-    const stockRes = await pool.query(
-        "SELECT stock FROM products WHERE id = $1",
-        [item.product_id]
-    );
+            await client.query(
+                "UPDATE products SET stock = stock - $1 WHERE id = $2",
+                [item.qty, item.pId]
+            );
 
-    const currentStock = stockRes.rows[0]?.stock || 0;
-
-    if (currentStock < item.quantity) {
-        return res.status(400).json({
-            message: `Not enough stock for product ID ${item.product_id}`
-        });
-    }
-
-    // 2. Insert order item
-    await pool.query(
-        `INSERT INTO order_items (order_id, product_id, quantity, price)
-         VALUES ($1, $2, $3, $4)`,
-        [orderId, item.product_id, item.quantity, item.price]
-    );
-
-    // 3. Reduce stock
-    await pool.query(
-        `UPDATE products
-         SET stock = stock - $1
-         WHERE id = $2`,
-        [item.quantity, item.product_id]
-    );
+            // Selectively delete ONLY the items purchased (fixes Buy Now wiping the whole cart)
+            await client.query(
+                "DELETE FROM cart WHERE user_id = $1 AND product_id = $2",
+                [userId, item.pId]
+            );
         }
 
-        // 5. Clear cart
-        await pool.query("DELETE FROM cart WHERE user_id = $1",
-                        [userId]);
-        
+        await client.query('COMMIT'); // Save everything
 
-        // 6. Return order ID
         res.json({
             message: "Order placed successfully",
             order_id: orderId
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).send("Server Error");
+        await client.query('ROLLBACK'); // Revert changes on error
+        console.error("Order Transaction Error:", error);
+        res.status(500).json({ message: "Server Error", error: error.message });
+    } finally {
+        client.release();
     }
 };
+
 // GET ORDER BY ID
 const getOrderById = async (req, res) => {
     try {
@@ -101,8 +117,12 @@ const getOrderById = async (req, res) => {
             [id]
         );
 
+        if (order.rows.length === 0) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
         const items = await pool.query(
-            `SELECT order_items.*, products.name
+            `SELECT order_items.*, products.name, products.category_id 
              FROM order_items
              JOIN products ON order_items.product_id = products.id
              WHERE order_id = $1`,
@@ -119,6 +139,7 @@ const getOrderById = async (req, res) => {
         res.status(500).send("Server Error");
     }
 };
+
 module.exports = {
     placeOrder,
     getOrderById,
