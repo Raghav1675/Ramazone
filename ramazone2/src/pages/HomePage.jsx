@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProductCard from "../components/ProductCard";
 
 const BASE = "https://ramazone.onrender.com" || "";
+const TARGET_SIZE = 15; // Exactly 15 valid products per load
+
 // Safe fetch — returns null if response is HTML (wrong URL) or errors
 const safeFetch = async (url) => {
   try {
@@ -12,10 +14,21 @@ const safeFetch = async (url) => {
   } catch { return null; }
 };
 
+// Helper: Verifies if an image URL actually loads (isn't broken)
+const isImageValid = (url) => {
+  return new Promise((resolve) => {
+    if (!url) return resolve(false);
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+};
+
 // Normalize backend product → frontend shape
 const norm = (p) => ({
   ...p,
-  image: p.image_url || p.image || `https://via.placeholder.com/300x300?text=${encodeURIComponent(p.name)}`,
+  image: p.image_url || p.image, // We will strictly test this URL
   category: p.category_name || p.category || "General",
   rating: parseFloat(p.rating) || 4.0,
   reviews: p.review_count || 0,
@@ -38,16 +51,19 @@ const SORT_OPTIONS = [
   { value: "rating", label: "Avg. Customer Review" },
   { value: "newest", label: "Newest Arrivals" },
 ];
-const PAGE_SIZE = 19;
+
 export default function HomePage({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [slide, setSlide] = useState(0);
-  const [sortBy, setSortBy] = useState("featured");
-  const [page, setPage] = useState(0);
+  const [sortBy, setSortBy] = useState("newest"); // Starts with New Arrivals
   const [hasMore, setHasMore] = useState(true);
+
+  // Use refs for accurate pagination across async background loops
+  const bufferRef = useRef([]);
+  const offsetRef = useRef(0);
 
   // Fetch categories
   useEffect(() => {
@@ -62,41 +78,82 @@ export default function HomePage({ searchQuery, setSearchQuery, selectedCategory
 
   // Fetch products when filters change
   useEffect(() => {
-      setLoading(true);
-      setPage(0);
-      setProducts([]);
-      setHasMore(true);
-      fetchPage(0, true);
-    }, [searchQuery, selectedCategory, sortBy]);
-  
-    const fetchPage = async (pageNum, replace = false) => {
+    setLoading(true);
+    setProducts([]);
+    setHasMore(true);
+    
+    // Reset trackers
+    bufferRef.current = [];
+    offsetRef.current = 0;
+    
+    fetchPage(true);
+  }, [searchQuery, selectedCategory, sortBy]);
+
+  const fetchPage = async (isReplace = false) => {
+    let isExhausted = false;
+
+    // Keep fetching from API until we have at least 15 valid, fully-loaded images in our buffer
+    while (bufferRef.current.length < TARGET_SIZE && !isExhausted) {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
       if (selectedCategory && selectedCategory !== "All") params.append("category", selectedCategory);
       if (sortBy !== "featured") params.append("sort", sortBy);
-      params.append("limit", PAGE_SIZE);
-      params.append("offset", pageNum * PAGE_SIZE);
-  
+      
+      params.append("limit", 20); // Fetch in chunks of 20
+      params.append("offset", offsetRef.current);
+
       const data = await safeFetch(`${BASE}/api/products?${params}`);
       const list = data ? (Array.isArray(data) ? data : (data.products || [])) : [];
-      const normed = list.map(norm);
-  
-      if (replace) {
-        setProducts(normed);
-        setLoading(false);
-      } else {
-        setProducts(prev => [...prev, ...normed]);
-        setLoadingMore(false);
+
+      if (list.length === 0) {
+        isExhausted = true;
+        break;
       }
-      if (normed.length < PAGE_SIZE) setHasMore(false);
-    };
-  
-    const loadMore = () => {
-      const next = page + 1;
-      setPage(next);
-      setLoadingMore(true);
-      fetchPage(next, false);
-    };
+
+      // 1. Normalize the incoming list
+      const candidates = list.map(norm);
+
+      // 2. Validate all images in this chunk simultaneously
+      const validationResults = await Promise.all(
+        candidates.map(p => isImageValid(p.image))
+      );
+
+      // 3. Keep ONLY the products where isImageValid returned true
+      const validItems = candidates.filter((_, index) => validationResults[index]);
+
+      // Add valid items to our holding buffer
+      bufferRef.current = [...bufferRef.current, ...validItems];
+      
+      // Move offset forward by the amount of raw items we checked, so we don't fetch duplicates
+      offsetRef.current += list.length; 
+
+      if (list.length < 20) {
+        isExhausted = true; // No more items on the server
+      }
+    }
+
+    // Slice exactly 15 valid items to show
+    const itemsToShow = bufferRef.current.slice(0, TARGET_SIZE);
+    
+    // Keep whatever is leftover in the buffer for the next time "Load More" is clicked
+    bufferRef.current = bufferRef.current.slice(TARGET_SIZE);
+
+    if (isReplace) {
+      setProducts(itemsToShow);
+      setLoading(false);
+    } else {
+      setProducts(prev => [...prev, ...itemsToShow]);
+      setLoadingMore(false);
+    }
+
+    // Determine if we should show the "Load More" button
+    setHasMore(!isExhausted || bufferRef.current.length > 0);
+  };
+
+  const loadMore = () => {
+    setLoadingMore(true);
+    fetchPage(false);
+  };
 
   const isFiltered = searchQuery || selectedCategory !== "All";
   const cur = HERO_SLIDES[slide];
@@ -168,7 +225,7 @@ export default function HomePage({ searchQuery, setSearchQuery, selectedCategory
         {loading ? (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
             <div className="spinner" style={{ width: "40px", height: "40px", borderWidth: "4px", margin: "0 auto 16px" }} />
-            <p style={{ color: "var(--rz-text-lt)" }}>Loading products…</p>
+            <p style={{ color: "var(--rz-text-lt)" }}>Loading valid products…</p>
           </div>
         ) : products.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 24px" }}>
@@ -206,4 +263,4 @@ export default function HomePage({ searchQuery, setSearchQuery, selectedCategory
       </div>
     </div>
   );
-}
+        }
