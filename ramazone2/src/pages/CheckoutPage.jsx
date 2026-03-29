@@ -46,7 +46,8 @@ export default function CheckoutPage() {
   // Fallback standard logic for Buy Now (Free above 499, else 40)
   const displayDelivery = isBuyNow ? (displaySubtotal >= 499 ? 0 : 40) : deliveryCharge; 
   const displayTotal = displaySubtotal + displayDelivery;
-
+const displayMRP = finalItems.reduce((sum, item) => sum + ((item.original_price || item.price) * (item.quantity || 1)), 0);
+const displayDiscount = displayMRP - displaySubtotal;
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ fullName: "", mobile: "", email: "", pincode: "", address: "", landmark: "", city: "", state: "", addressType: "Home" });
   const [errors, setErrors] = useState({});
@@ -242,26 +243,44 @@ export default function CheckoutPage() {
 
           {/* Summary sidebar */}
           <div style={{ background:"#fff", border:"1px solid var(--rz-border-lt)", borderRadius:"var(--r-lg)", padding:"18px", position:"sticky", top:"80px" }}>
-            <h3 style={{fontFamily:"var(--font-head)",fontSize:"16px",fontWeight:700,marginBottom:"12px"}}>Order Summary</h3>
-            <div style={{maxHeight:"220px",overflowY:"auto",marginBottom:"12px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              {finalItems.map(i=>(
-                <div key={i.id} style={{display:"flex",gap:"8px",alignItems:"center"}}>
-                  <img src={i.image} alt="" style={{width:"36px",height:"36px",objectFit:"cover",borderRadius:"4px",flexShrink:0}} onError={e=>e.target.src="https://via.placeholder.com/36"} />
-                  <div style={{flex:1,fontSize:"12px",color:"var(--rz-text-md)"}}>{i.name.slice(0,30)}{i.name.length>30?"…":""} ×{i.quantity || 1}</div>
-                  <div style={{fontSize:"13px",fontWeight:600,flexShrink:0}}>₹{(i.price*(i.quantity || 1)).toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
-            {/* ✅ FIXED: Use the dynamic display variables instead of hardcoded cart context values */}
-            <div style={{borderTop:"1px solid var(--rz-border-lt)",paddingTop:"10px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <SRow label={`Subtotal (${displayCount})`} value={`₹${displaySubtotal.toLocaleString()}`} />
-              <SRow label="Delivery" value={displayDelivery===0?<span style={{color:"var(--rz-green)"}}>FREE</span>:`₹${displayDelivery}`} />
-              <div style={{display:"flex",justifyContent:"space-between",paddingTop:"8px",borderTop:"1px solid var(--rz-border-lt)"}}>
-                <span style={{fontWeight:700}}>Total</span>
-                <span style={{fontFamily:"var(--font-head)",fontWeight:800,fontSize:"18px"}}>₹{displayTotal.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+  <h3 style={{fontFamily:"var(--font-head)",fontSize:"16px",fontWeight:700,marginBottom:"12px"}}>Order Summary</h3>
+  
+  <div style={{maxHeight:"220px",overflowY:"auto",marginBottom:"12px",display:"flex",flexDirection:"column",gap:"8px"}}>
+    {finalItems.map(i=>(
+      <div key={i.id} style={{display:"flex",gap:"8px",alignItems:"center"}}>
+        <img src={i.image} alt="" style={{width:"36px",height:"36px",objectFit:"cover",borderRadius:"4px",flexShrink:0}} onError={e=>e.target.src="https://via.placeholder.com/36"} />
+        <div style={{flex:1,fontSize:"12px",color:"var(--rz-text-md)"}}>{i.name.slice(0,30)}{i.name.length>30?"…":""} ×{i.quantity || 1}</div>
+        <div style={{fontSize:"13px",fontWeight:600,flexShrink:0}}>₹{(i.price*(i.quantity || 1)).toLocaleString()}</div>
+      </div>
+    ))}
+  </div>
+
+  <div style={{borderTop:"1px solid var(--rz-border-lt)",paddingTop:"10px",display:"flex",flexDirection:"column",gap:"8px"}}>
+    {/* Show MRP if there is a discount */}
+    {displayDiscount > 0 && (
+      <SRow label="Total MRP" value={`₹${displayMRP.toLocaleString()}`} />
+    )}
+    
+    <SRow label={`Subtotal (${displayCount})`} value={`₹${displaySubtotal.toLocaleString()}`} />
+    <SRow label="Delivery" value={displayDelivery===0?<span style={{color:"var(--rz-green)"}}>FREE</span>:`₹${displayDelivery}`} />
+    
+    {/* Highlight the Discount in Green */}
+    {displayDiscount > 0 && (
+      <SRow label="Discount" value={<span style={{color:"var(--rz-green)"}}>- ₹{displayDiscount.toLocaleString()}</span>} />
+    )}
+
+    <div style={{display:"flex",justifyContent:"space-between",paddingTop:"8px",borderTop:"1px solid var(--rz-border-lt)"}}>
+      <span style={{fontWeight:700}}>Total</span>
+      <span style={{fontFamily:"var(--font-head)",fontWeight:800,fontSize:"18px", color:"var(--rz-red)"}}>₹{displayTotal.toLocaleString()}</span>
+    </div>
+    
+    {displayDiscount > 0 && (
+      <div style={{ fontSize: "12px", color: "var(--rz-green)", fontWeight: 600, textAlign: "right", marginTop: "4px" }}>
+        You will save ₹{displayDiscount.toLocaleString()} on this order
+      </div>
+    )}
+  </div>
+</div>
         </div>
       </div>
 
@@ -305,4 +324,4 @@ function SRow({ label, value }) {
       <span style={{ fontWeight:500 }}>{value}</span>
     </div>
   );
-                    }
+                      }
