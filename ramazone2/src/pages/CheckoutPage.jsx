@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { useLocation } from "react-router-dom";
 
 const BASE = "https://ramazone.onrender.com" || "";
 
@@ -17,8 +16,8 @@ const INDIAN_STATES = [
 const PAYMENT_METHODS = [
   { id: "upi",        label: "UPI / PhonePe / GPay", icon: "📱" },
   { id: "card",       label: "Credit / Debit Card",  icon: "💳" },
-  { id: "netbanking", label: "Net Banking",           icon: "🏦" },
-  { id: "cod",        label: "Cash on Delivery",      icon: "💵" },
+  { id: "netbanking", label: "Net Banking",          icon: "🏦" },
+  { id: "cod",        label: "Cash on Delivery",     icon: "💵" },
 ];
 
 function validate(form) {
@@ -33,23 +32,38 @@ function validate(form) {
 }
 
 export default function CheckoutPage() {
-const location = useLocation();
-const buyNowItem = location.state?.buyNowItem;
+  const location = useLocation();
   const navigate = useNavigate();
   const { cartItems, cartSubtotal, deliveryCharge, grandTotal, cartCount, clearCart } = useCart();
-const finalItems = buyNowItem ? [buyNowItem] : cartItems;
+  
+  const buyNowItem = location.state?.buyNowItem;
+  const isBuyNow = !!buyNowItem;
+  const finalItems = isBuyNow ? [buyNowItem] : cartItems;
+
+  // ✅ FIXED: Calculate accurate totals depending on Cart vs Buy Now
+  const displaySubtotal = isBuyNow ? (buyNowItem.price * (buyNowItem.quantity || 1)) : cartSubtotal;
+  const displayCount = isBuyNow ? (buyNowItem.quantity || 1) : cartCount;
+  // Fallback standard logic for Buy Now (Free above 499, else 40)
+  const displayDelivery = isBuyNow ? (displaySubtotal >= 499 ? 0 : 40) : deliveryCharge; 
+  const displayTotal = displaySubtotal + displayDelivery;
+
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ fullName: "", mobile: "", email: "", pincode: "", address: "", landmark: "", city: "", state: "", addressType: "Home" });
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [placing, setPlacing] = useState(false);
 
-useEffect(() => {
-  if (!buyNowItem && cartItems.length === 0) {
-    navigate("/cart");
-  }
-}, []);
-  const set = (f, v) => { setForm(p => ({ ...p, [f]: v })); if (errors[f]) setErrors(e => ({ ...e, [f]: undefined })); };
+  // ✅ FIXED: Added missing dependencies to prevent stale closures
+  useEffect(() => {
+    if (!isBuyNow && cartItems.length === 0) {
+      navigate("/cart");
+    }
+  }, [isBuyNow, cartItems.length, navigate]);
+
+  const set = (f, v) => { 
+    setForm(p => ({ ...p, [f]: v })); 
+    if (errors[f]) setErrors(e => ({ ...e, [f]: undefined })); 
+  };
 
   const goPayment = () => {
     const e = validate(form);
@@ -59,16 +73,18 @@ useEffect(() => {
 
   const placeOrder = async () => {
     setPlacing(true);
-    // Build address string for backend (backend expects plain text address)
     const addressStr = `${form.fullName}, ${form.mobile}, ${form.address}${form.landmark ? ", " + form.landmark : ""}, ${form.city}, ${form.state} - ${form.pincode}`;
 
     try {
       const res = await fetch(`${BASE}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: addressStr,
-        email: form.email}),
-        
+        body: JSON.stringify({ 
+          address: addressStr,
+          email: form.email,
+          items: finalItems, // Sending exactly what was bought
+          total_amount: displayTotal
+        }),
       });
       const data = await res.json();
 
@@ -78,19 +94,20 @@ useEffect(() => {
         return;
       }
 
-      
+      // ✅ FIXED: Only clear the cart if the user actually checked out using the cart
+      if (!isBuyNow) {
+        setTimeout(() => clearCart(), 100);
+      }
+
       navigate(`/order-confirmation/${data.order_id}`, {
-  state: {
-    orderId: data.order_id,
-    items: finalItems,   // ✅ FIXED
-    address: form,
-    total: grandTotal,
-    paymentMethod
-  }
-});// ✅ THEN clear cart (SAFE)
-setTimeout(() => {
-  clearCart();
-}, 100);
+        state: {
+          orderId: data.order_id,
+          items: finalItems,
+          address: form,
+          total: displayTotal, // ✅ FIXED: Pass the accurate total
+          paymentMethod
+        }
+      });
     } catch (e) {
       alert("Network error. Please try again.");
       setPlacing(false);
@@ -207,9 +224,9 @@ setTimeout(() => {
                     <img src={item.image} alt="" style={{width:"48px",height:"48px",objectFit:"cover",borderRadius:"var(--r-sm)",border:"1px solid var(--rz-border-lt)"}} onError={e=>e.target.src="https://via.placeholder.com/48"} />
                     <div style={{flex:1}}>
                       <div style={{fontSize:"13px",fontWeight:500}}>{item.name}</div>
-                      <div style={{fontSize:"12px",color:"var(--rz-text-lt)"}}>Qty: {item.quantity}</div>
+                      <div style={{fontSize:"12px",color:"var(--rz-text-lt)"}}>Qty: {item.quantity || 1}</div>
                     </div>
-                    <div style={{fontFamily:"var(--font-head)",fontWeight:700}}>₹{(item.price*item.quantity).toLocaleString()}</div>
+                    <div style={{fontFamily:"var(--font-head)",fontWeight:700}}>₹{(item.price * (item.quantity || 1)).toLocaleString()}</div>
                   </div>
                 ))}
                 <div style={{display:"flex",gap:"10px",marginTop:"20px",flexWrap:"wrap"}}>
@@ -230,17 +247,18 @@ setTimeout(() => {
               {finalItems.map(i=>(
                 <div key={i.id} style={{display:"flex",gap:"8px",alignItems:"center"}}>
                   <img src={i.image} alt="" style={{width:"36px",height:"36px",objectFit:"cover",borderRadius:"4px",flexShrink:0}} onError={e=>e.target.src="https://via.placeholder.com/36"} />
-                  <div style={{flex:1,fontSize:"12px",color:"var(--rz-text-md)"}}>{i.name.slice(0,30)}{i.name.length>30?"…":""} ×{i.quantity}</div>
-                  <div style={{fontSize:"13px",fontWeight:600,flexShrink:0}}>₹{(i.price*i.quantity).toLocaleString()}</div>
+                  <div style={{flex:1,fontSize:"12px",color:"var(--rz-text-md)"}}>{i.name.slice(0,30)}{i.name.length>30?"…":""} ×{i.quantity || 1}</div>
+                  <div style={{fontSize:"13px",fontWeight:600,flexShrink:0}}>₹{(i.price*(i.quantity || 1)).toLocaleString()}</div>
                 </div>
               ))}
             </div>
+            {/* ✅ FIXED: Use the dynamic display variables instead of hardcoded cart context values */}
             <div style={{borderTop:"1px solid var(--rz-border-lt)",paddingTop:"10px",display:"flex",flexDirection:"column",gap:"8px"}}>
-              <SRow label={`Subtotal (${cartCount})`} value={`₹${cartSubtotal.toLocaleString()}`} />
-              <SRow label="Delivery" value={deliveryCharge===0?<span style={{color:"var(--rz-green)"}}>FREE</span>:`₹${deliveryCharge}`} />
+              <SRow label={`Subtotal (${displayCount})`} value={`₹${displaySubtotal.toLocaleString()}`} />
+              <SRow label="Delivery" value={displayDelivery===0?<span style={{color:"var(--rz-green)"}}>FREE</span>:`₹${displayDelivery}`} />
               <div style={{display:"flex",justifyContent:"space-between",paddingTop:"8px",borderTop:"1px solid var(--rz-border-lt)"}}>
                 <span style={{fontWeight:700}}>Total</span>
-                <span style={{fontFamily:"var(--font-head)",fontWeight:800,fontSize:"18px"}}>₹{grandTotal.toLocaleString()}</span>
+                <span style={{fontFamily:"var(--font-head)",fontWeight:800,fontSize:"18px"}}>₹{displayTotal.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -287,4 +305,4 @@ function SRow({ label, value }) {
       <span style={{ fontWeight:500 }}>{value}</span>
     </div>
   );
-}
+                    }
