@@ -28,9 +28,9 @@ export default function Footer() {
             </FooterSection>
 
             <FooterSection title="Connect with Us">
-              <FooterLink to="https://linkedin.com" external>LinkedIn</FooterLink>
-              <FooterLink to="https://github.com" external>GitHub</FooterLink>
-              <FooterLink to="https://twitter.com" external>Twitter</FooterLink>
+              <FooterLink to="http://linkedin.com/in/raghav1675/" external>LinkedIn</FooterLink>
+              <FooterLink to="https://github.com/Raghav1675/" external>GitHub</FooterLink>
+              <FooterLink to="https://www.instagram.com/raghav_gupta860/" external>Instagram</FooterLink>
             </FooterSection>
 
             <FooterSection title="Let Us Help You">
