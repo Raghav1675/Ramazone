@@ -13,7 +13,15 @@ const transporter = nodemailer.createTransport({
 });
 
 const getAllOrders = async (req, res) => {
-    // ... (Keep existing getAllOrders)
+try {
+        const result = await pool.query(
+            "SELECT * FROM orders ORDER BY id DESC"
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Server Error");
+}
 };
 
 // PLACE ORDER (Secure & Transactional + Email)
@@ -147,7 +155,35 @@ const placeOrder = async (req, res) => {
 };
 
 const getOrderById = async (req, res) => {
-    // ... (Keep existing getOrderById)
+    try {
+        const { id } = req.params;
+
+        const order = await pool.query(
+            "SELECT * FROM orders WHERE id = $1",
+            [id]
+        );
+
+        if (order.rows.length === 0) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        const items = await pool.query(
+            `SELECT order_items.*, products.name, products.category_id 
+             FROM order_items
+             JOIN products ON order_items.product_id = products.id
+             WHERE order_id = $1`,
+            [id]
+        );
+
+        res.json({
+            order: order.rows[0],
+            items: items.rows
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Server Error");
+    }
 };
 
 module.exports = { placeOrder, getOrderById, getAllOrders };
