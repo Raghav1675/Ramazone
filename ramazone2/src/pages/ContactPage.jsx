@@ -46,9 +46,11 @@ export default function ContactPage() {
                 I am a freelance web developer and engineering student at Chandigarh University. Looking to build a stunning web app or e-commerce platform for your startup? Let's collaborate.
               </p>
               <div style={{ display: "flex", gap: "12px", fontSize: "13px", fontWeight: 600 }}>
-                <a href="#" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>LinkedIn ↗</a>
-                <a href="#" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>GitHub ↗</a>
-                <a href="#" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>Portfolio ↗</a>
+                <a href="https://www.linkedin.com/in/raghav1675/" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>LinkedIn ↗</a>
+                <a href="https://github.com/Raghav1675/" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>GitHub ↗</a>
+                <a href="https://www.instagram.com/raghav_gupta860" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>Instagram ↗</a>
+                <a href="https://prestigelands.rf.gd/" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>Prestige Lands ↗</a>
+                <a href="https://raghav-builders-frontend.vercel.app/" style={{ color: "var(--rz-teal)", textDecoration: "none" }}>Raghav Builders ↗</a>
               </div>
             </div>
 
@@ -57,7 +59,7 @@ export default function ContactPage() {
                 <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--rz-bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📧</div>
                 <div>
                   <div style={{ fontSize: "12px", color: "var(--rz-text-lt)", textTransform: "uppercase", fontWeight: 600 }}>Email Support</div>
-                  <div style={{ fontWeight: 500 }}>support@ramazone.com</div>
+                  <div style={{ fontWeight: 500 }}>support@ramazone.com or raghavgupta1675@gmail.com</div>
                 </div>
               </div>
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -86,7 +88,7 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--rz-text-md)", marginBottom: "6px" }}>Your Name *</label>
-                  <input required type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="form-input" placeholder="John Doe" />
+                  <input required type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="form-input" placeholder="Raghav Gupta" />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--rz-text-md)", marginBottom: "6px" }}>Email Address *</label>
