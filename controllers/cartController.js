@@ -38,7 +38,7 @@ const getCart = async (req, res) => {
             `SELECT cart.*, products.name, products.price, products.image_url
              FROM cart
              JOIN products ON cart.product_id = products.id
-             WHERE cart.user_id=$1`
+             WHERE cart.user_id=$1`,
             [userId]
         );
 
