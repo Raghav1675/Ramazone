@@ -1,5 +1,17 @@
 const pool = require("../config/db");
 
+const getAllOrders = async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT * FROM orders ORDER BY id DESC"
+        );
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Server Error");
+    }
+};
 // PLACE ORDER
 const placeOrder = async (req, res) => {
     try {
@@ -109,5 +121,6 @@ const getOrderById = async (req, res) => {
 };
 module.exports = {
     placeOrder,
-    getOrderById
+    getOrderById,
+    getAllOrders
 };
