@@ -64,7 +64,8 @@ const placeOrder = async (req, res) => {
         }
 
         // 5. Clear cart
-        await pool.query("DELETE FROM cart");
+        await pool.query("DELETE FROM cart WHERE user_id = $1");
+        [userId]
 
         // 6. Return order ID
         res.json({
