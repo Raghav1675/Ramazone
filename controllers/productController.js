@@ -29,7 +29,27 @@ const getProducts = async (req, res) => {
         if (conditions.length > 0) {
             query += " WHERE " + conditions.join(" AND ");
         }
-
+// Sorting
+if (req.query.sort) {
+    switch (req.query.sort) {
+        case "price_asc":
+            query += " ORDER BY products.price ASC";
+            break;
+        case "price_desc":
+            query += " ORDER BY products.price DESC";
+            break;
+        case "rating":
+            query += " ORDER BY products.rating DESC";
+            break;
+        case "newest":
+            query += " ORDER BY products.created_at DESC";
+            break;
+        default:
+            query += " ORDER BY products.id DESC";
+    }
+} else {
+    query += " ORDER BY products.id DESC";
+}
         const limit  = parseInt(req.query.limit)  || 12;
 const offset = parseInt(req.query.offset) || 0;
 values.push(limit);
