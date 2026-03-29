@@ -21,9 +21,9 @@ const getProducts = async (req, res) => {
         }
 
         // Category filter
-        if (category) {
-            values.push(category);
-            conditions.push(`products.category_id = $${values.length}`);
+        if (category && category !== "All") {
+    values.push(category);
+    conditions.push(`categories.name ILIKE $${values.length}`);
         }
 
         if (conditions.length > 0) {
