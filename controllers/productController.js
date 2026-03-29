@@ -30,9 +30,15 @@ const getProducts = async (req, res) => {
             query += " WHERE " + conditions.join(" AND ");
         }
 
-        const result = await pool.query(query, values);
+        const limit  = parseInt(req.query.limit)  || 12;
+const offset = parseInt(req.query.offset) || 0;
+values.push(limit);
+query += ` LIMIT $${values.length}`;
+values.push(offset);
+query += ` OFFSET $${values.length}`;
 
-        res.json(result.rows);
+const result = await pool.query(query, values);
+res.json(result.rows);
     } catch (error) {
         console.error(error);
         res.status(500).send("Server Error");
