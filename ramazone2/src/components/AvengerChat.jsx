@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const AVENGER_BASE = import.meta.env.VITE_AVENGER_URL || "http://localhost:8001";
+const AVENGER_BASE = "https://avenger-for-ramazone2-0.onrender.com/" || "http://localhost:8001";
 
 const WELCOME = {
   role: "bot",
