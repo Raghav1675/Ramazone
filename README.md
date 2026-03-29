@@ -1,6 +1,6 @@
 # Ramazone 2.0 🛒
 
-> A production-ready, full-stack Amazon-clone e-commerce platform built as a monorepo for the Scaler AI Labs SDE Intern Assignment. All APIs used explicitly for user to see URLs
+> A production-ready, full-stack Amazon-clone e-commerce platform built as a monorepo for the Scaler AI Labs SDE Intern Assignment. All APIs used explicitly for user to see URLs. Added some other projects in contact page and footer
 
 **Live Demo →** [ramazone20.vercel.app](https://ramazone20.vercel.app)
 
@@ -61,7 +61,7 @@ RAMAZONE/
 ## ✨ Features
 
 ### Core (Required)
-- **Product Listing** — Grid layout, search with autocomplete, category filter, sort (price, rating, newest), paginated Load More (12 per page)
+- **Product Listing** — Grid layout, search with autocomplete, category filter, sort (price, rating, newest), paginated Load More (15 per page)
 - **Product Detail** — Image carousel, description, specs table, stock status, related products
 - **Shopping Cart** — Add/remove/update quantity, savings calculation, free delivery threshold (₹499+)
 - **Checkout** — 3-step wizard (Address → Payment → Review), full form validation with Indian states
