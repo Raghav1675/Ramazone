@@ -1,5 +1,5 @@
 const pool = require("../config/db");
-
+const userId = 1;
 // ADD TO CART
 const addToCart = async (req, res) => {
     try {
@@ -7,21 +7,21 @@ const addToCart = async (req, res) => {
 
         // Check if already exists
         const existing = await pool.query(
-            "SELECT * FROM cart WHERE product_id = $1",
-            [product_id]
+            "SELECT * FROM cart WHERE product_id = $1 AND user_id = $2",
+            [product_id,userId]
         );
 
         if (existing.rows.length > 0) {
             // Update quantity
             await pool.query(
-                "UPDATE cart SET quantity = quantity + $1 WHERE product_id = $2",
+                "UPDATE cart SET quantity = quantity + $1 WHERE product_id = $2 AND user_id = $3",
                 [quantity, product_id]
             );
         } else {
             // Insert new
             await pool.query(
-                "INSERT INTO cart (product_id, quantity) VALUES ($1, $2)",
-                [product_id, quantity]
+                "INSERT INTO cart (product_id, quantity,userId) VALUES ($1, $2)",
+                [product_id, quantity,userId]
             );
         }
 
@@ -37,7 +37,9 @@ const getCart = async (req, res) => {
         const result = await pool.query(
             `SELECT cart.*, products.name, products.price, products.image_url
              FROM cart
-             JOIN products ON cart.product_id = products.id`
+             JOIN products ON cart.product_id = products.id
+             WHERE cart.user_id=$1`
+            [userId]
         );
 
         res.json(result.rows);
@@ -52,7 +54,7 @@ const updateCart = async (req, res) => {
         const { product_id, quantity } = req.body;
 
         await pool.query(
-            "UPDATE cart SET quantity = $1 WHERE product_id = $2",
+            "UPDATE cart SET quantity = $1 WHERE product_id = $2 AND user_id = $3",
             [quantity, product_id]
         );
 
@@ -68,7 +70,7 @@ const removeFromCart = async (req, res) => {
         const { product_id } = req.params;
 
         await pool.query(
-            "DELETE FROM cart WHERE product_id = $1",
+            "DELETE FROM cart WHERE product_id = $1 AND user_id = $2",
             [product_id]
         );
 
