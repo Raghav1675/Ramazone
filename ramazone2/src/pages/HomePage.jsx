@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import ProductCard from "../components/ProductCard";
+import Skeleton from '@mui/material/Skeleton';
 
 const BASE = "https://ramazone.onrender.com" || "";
 const TARGET_SIZE = 15; // Exactly 15 valid products per load
@@ -60,6 +61,13 @@ export default function HomePage({ searchQuery, setSearchQuery, selectedCategory
   const [slide, setSlide] = useState(0);
   const [sortBy, setSortBy] = useState("newest"); // Starts with New Arrivals
   const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlide((prevSlide) => (prevSlide + 1) % HERO_SLIDES.length);
+    }, 2500); // Changes every 4.5 seconds
+    return () => clearInterval(timer);
+  }, []);
 
   // Use refs for accurate pagination across async background loops
   const bufferRef = useRef([]);
@@ -223,9 +231,18 @@ export default function HomePage({ searchQuery, setSearchQuery, selectedCategory
 
         {/* States */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <div className="spinner" style={{ width: "40px", height: "40px", borderWidth: "4px", margin: "0 auto 16px" }} />
-            <p style={{ color: "var(--rz-text-lt)" }}>Loading valid products…</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(220px, 100%), 1fr))", gap: "16px" }}>
+            {/* Generate 15 dummy skeleton cards */}
+            {Array.from({ length: 15 }).map((_, index) => (
+              <div key={index} style={{ background: "#fff", borderRadius: "var(--r-md)", border: "1px solid var(--rz-border-lt)", padding: "12px" }}>
+                <Skeleton variant="rectangular" height={180} sx={{ borderRadius: "var(--r-sm)", mb: 2 }} />
+                <Skeleton variant="text" sx={{ fontSize: '1.2rem', width: "80%", mb: 0.5 }} />
+                <Skeleton variant="text" sx={{ fontSize: '1rem', width: "60%", mb: 1 }} />
+                <Skeleton variant="circular" width={24} height={24} sx={{ mb: 1.5, display: "inline-block", mr: 1 }} />
+                <Skeleton variant="circular" width={24} height={24} sx={{ mb: 1.5, display: "inline-block" }} />
+                <Skeleton variant="rectangular" height={36} sx={{ borderRadius: "99px" }} />
+              </div>
+            ))}
           </div>
         ) : products.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 24px" }}>
@@ -263,4 +280,4 @@ export default function HomePage({ searchQuery, setSearchQuery, selectedCategory
       </div>
     </div>
   );
-        }
+    }
