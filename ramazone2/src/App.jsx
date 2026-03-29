@@ -10,6 +10,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
+import ContactPage from "./pages/ContactPage";
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,6 +39,7 @@ export default function App() {
                 />
               }
             />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/orders" element={<OrderHistoryPage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/cart" element={<CartPage />} />
