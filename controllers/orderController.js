@@ -15,7 +15,7 @@ const getAllOrders = async (req, res) => {
 // PLACE ORDER
 const placeOrder = async (req, res) => {
     try {
-        const { address } = req.body;
+        const { address, email } = req.body;
 
         // 1. Get cart items
         const cartItems = await pool.query(
@@ -36,8 +36,8 @@ const placeOrder = async (req, res) => {
 
         // 3. Create order
         const orderResult = await pool.query(
-            "INSERT INTO orders (total_amount, address) VALUES ($1, $2) RETURNING *",
-            [total, address]
+            "INSERT INTO orders (total_amount, address, email) VALUES ($1, $2, $3) RETURNING *",
+            [total, address, email]
         );
 
         const orderId = orderResult.rows[0].id;
