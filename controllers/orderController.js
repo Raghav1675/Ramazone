@@ -32,11 +32,35 @@ const placeOrder = async (req, res) => {
 
         // 4. Insert order items
         for (let item of cartItems.rows) {
-            await pool.query(
-                `INSERT INTO order_items (order_id, product_id, quantity, price)
-                 VALUES ($1, $2, $3, $4)`,
-                [orderId, item.product_id, item.quantity, item.price]
-            );
+
+    // 1. Check stock
+    const stockRes = await pool.query(
+        "SELECT stock FROM products WHERE id = $1",
+        [item.product_id]
+    );
+
+    const currentStock = stockRes.rows[0]?.stock || 0;
+
+    if (currentStock < item.quantity) {
+        return res.status(400).json({
+            message: `Not enough stock for product ID ${item.product_id}`
+        });
+    }
+
+    // 2. Insert order item
+    await pool.query(
+        `INSERT INTO order_items (order_id, product_id, quantity, price)
+         VALUES ($1, $2, $3, $4)`,
+        [orderId, item.product_id, item.quantity, item.price]
+    );
+
+    // 3. Reduce stock
+    await pool.query(
+        `UPDATE products
+         SET stock = stock - $1
+         WHERE id = $2`,
+        [item.quantity, item.product_id]
+    );
         }
 
         // 5. Clear cart
