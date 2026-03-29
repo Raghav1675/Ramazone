@@ -22,9 +22,9 @@ export default function Footer() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "32px", paddingBottom: "32px" }}>
             
             <FooterSection title="Get to Know Us">
-              <FooterLink to="/contact">About Ramazone</FooterLink>
-              <FooterLink to="/contact">Careers</FooterLink>
-              <FooterLink to="/contact">Press Releases</FooterLink>
+              <FooterLink to="https://raghav-builders-frontend.vercel.app/">About My Dev</FooterLink>
+              <FooterLink to="https://raghav-builders-frontend.vercel.app/about">Careers</FooterLink>
+              <FooterLink to="https://prestigelands.rf.gd/">Press Releases</FooterLink>
             </FooterSection>
 
             <FooterSection title="Connect with Us">
